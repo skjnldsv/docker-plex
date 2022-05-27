@@ -14,7 +14,7 @@ RUN \
 	libavutil56 && \
 apt-get clean
 
-RUN cp /lib/x86_64-linux-gnu/dri/* /usr/lib/plexmediaserver/lib/dri/
+RUN cp /lib/x86_64-linux-gnu/dri/radeonsi_drv_video.so /usr/lib/plexmediaserver/lib/dri/
 RUN cp /lib/x86_64-linux-gnu/libdrm_amdgpu.so.1.* /usr/lib/plexmediaserver/lib/libdrm_amdgpu.so.1
 RUN cp /lib/x86_64-linux-gnu/libdrm.so.2.* /usr/lib/plexmediaserver/lib/libdrm.so.2
 RUN cp /lib/x86_64-linux-gnu/libva-drm.so.2.* /usr/lib/plexmediaserver/lib/libva-drm.so.2
