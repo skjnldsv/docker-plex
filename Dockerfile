@@ -64,7 +64,7 @@ RUN apk add  xf86-video-amdgpu linux-firmware-amdgpu --no-cache --update-cache \
 from ghcr.io/linuxserver/plex:latest
 ARG OUTPUT
 
-# Install AMD drivers
+# Install AMD drivers for HW decoding
 RUN apt-get update \
  && apt-get install -y software-properties-common \
  && add-apt-repository ppa:oibaf/graphics-drivers -y \
