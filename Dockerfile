@@ -42,7 +42,7 @@ RUN apk add  xf86-video-amdgpu linux-firmware-amdgpu --no-cache --update-cache \
  && cp -a /usr/lib/libdrm*.so* "$OUTPUT/usr/lib" \
  && cp -a /usr/lib/libbsd*.so* "$OUTPUT/usr/lib" \
  #&& cp -a /usr/lib/libxshmfence*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libkms*.so* "$OUTPUT/usr/lib" \
+ #&& cp -a /usr/lib/libkms*.so* "$OUTPUT/usr/lib" \
  && cp -a /usr/lib/libxcb*.so* "$OUTPUT/usr/lib" \
  && cp -a /usr/lib/libffi*.so* "$OUTPUT/usr/lib" \
  && cp -a /usr/lib/libLLVM*.so* "$OUTPUT/usr/lib" \
