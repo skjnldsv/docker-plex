@@ -53,7 +53,7 @@ RUN apk add  xf86-video-amdgpu linux-firmware-amdgpu --no-cache --update-cache \
  && cp -a /usr/lib/libgcc_s*.so* "$OUTPUT/usr/lib" \
  && cp -a /usr/lib/libmd*.so* "$OUTPUT/usr/lib" \
  && cp -a /usr/lib/libxml2*.so* "$OUTPUT/usr/lib" \
- && mkdir -p "$OUTPUT/usr/lib/dri" \
+ #&& mkdir -p "$OUTPUT/usr/lib/dri" \
  && cp -a /usr/lib/dri/*.so* "$OUTPUT/usr/lib/dri" \
  && mkdir -p "$OUTPUT/usr/share/libdrm" \
  && cp -a /usr/share/libdrm/* "$OUTPUT/usr/share/libdrm" \
