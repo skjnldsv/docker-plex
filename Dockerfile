@@ -32,7 +32,7 @@ ARG DESTDIR
 WORKDIR /tmp/amd
 
 RUN apk add  xf86-video-amdgpu linux-firmware-amdgpu --no-cache --update-cache \
- && apk add --no-cache -X https://packages.aosc.io/ libva-utils \
+ && apk add --no-cache -X https://packages.altlinux.org/en/p10/packages/ libva-utils \
  && mkdir -p "$OUTPUT/usr/bin" \
  && cp -a /usr/bin/vainfo "$OUTPUT/usr/bin" \
  && mkdir -p "$OUTPUT/usr/lib" \
