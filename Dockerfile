@@ -18,7 +18,8 @@ RUN apk add --no-cache \
     musl-dev \
     nghttp2-dev \
     pkgconfig \
-    xxd
+    xxd \
+    libbsd
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 FROM builder AS amd
