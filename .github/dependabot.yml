@@ -9,3 +9,8 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+      time: "02:30"
+    target-branch: "develop"
+    labels: 
+      - "docker dependency update"
+    
