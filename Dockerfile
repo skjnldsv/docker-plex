@@ -32,7 +32,7 @@ ARG DESTDIR
 
 WORKDIR /tmp/amd
 
-RUN ls -a /usr/lib && apk add xf86-video-amdgpu linux-firmware-amdgpu --no-cache --update-cache \
+RUN apk add xf86-video-amdgpu linux-firmware-amdgpu --no-cache --update-cache \
  && apk add --no-cache -X http://dl-cdn.alpinelinux.org/alpine/edge/testing libva-utils \
  && mkdir -p "$OUTPUT/usr/bin" \
  && cp -a /usr/bin/vainfo "$OUTPUT/usr/bin" \
@@ -79,7 +79,7 @@ RUN apt-get update \
  && apt-get clean
 
 # Copy lib files
-#COPY --from=amd $OUTPUT/usr/lib/dri/*.so* /usr/lib/plexmediaserver/lib/dri/
+COPY --from=amd $OUTPUT/usr/lib/dri/*.so* /usr/lib/plexmediaserver/lib/dri/
 COPY --from=amd $OUTPUT/usr/lib/ld-musl-x86_64.so* /usr/lib/plexmediaserver/lib/
 COPY --from=amd $OUTPUT/usr/lib/libdrm*.so* /usr/lib/plexmediaserver/lib/
 COPY --from=amd $OUTPUT/usr/lib/libelf*.so* /usr/lib/plexmediaserver/lib/
