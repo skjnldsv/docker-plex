@@ -62,7 +62,7 @@ RUN apk add xf86-video-amdgpu linux-firmware-amdgpu --no-cache --update-cache \
  && cp -a /lib/libz*.so* "$OUTPUT/usr/lib"
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-FROM ghcr.io/linuxserver/plex:1.29.0
+FROM ghcr.io/linuxserver/plex:1.28.2
 ARG OUTPUT
 
 # Install AMD drivers for HW decoding
