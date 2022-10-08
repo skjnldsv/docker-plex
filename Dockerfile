@@ -14,6 +14,7 @@ RUN apk add --no-cache \
     git \
     libtool \
     linux-headers \
+    libdrm \
     make \
     musl-dev \
     nghttp2-dev \
@@ -44,7 +45,7 @@ RUN ls -a /usr/lib && apk add  xf86-video-amdgpu linux-firmware-amdgpu --no-cach
  #&& cp -a /usr/lib/libxshmfence*.so* "$OUTPUT/usr/lib" \
  && cp -a /usr/lib/libkms*.so* "$OUTPUT/usr/lib" \
  && cp -a /usr/lib/libxcb*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libffi*.so* "$OUTPUT/usr/lib" \
+ && cp -a /usr/lib/libffi*.so* "$OUTPUT/usr/lib" \/usr/lib/libkms
  && cp -a /usr/lib/libLLVM*.so* "$OUTPUT/usr/lib" \
  && cp -a /usr/lib/libzstd*.so* "$OUTPUT/usr/lib" \
  && cp -a /usr/lib/libexpat*.so* "$OUTPUT/usr/lib" \
@@ -55,7 +56,7 @@ RUN ls -a /usr/lib && apk add  xf86-video-amdgpu linux-firmware-amdgpu --no-cach
  && cp -a /usr/lib/libxml2*.so* "$OUTPUT/usr/lib" \
  && mkdir -p "$OUTPUT/usr/lib/dri" \
  #&& cp -a /usr/lib/dri/*.so* "$OUTPUT/usr/lib/dri" \
- && mkdir -p "$OUTPUT/usr/share/libdrm" \
+ && mkdir -p "$OUTPUT/usr/share/libdrm" 
  && cp -a /usr/share/libdrm/* "$OUTPUT/usr/share/libdrm" \
  && cp -a /lib/ld-musl-x86_64.so.1 "$OUTPUT/usr/lib" \
  && cp -a /lib/libz*.so* "$OUTPUT/usr/lib"
