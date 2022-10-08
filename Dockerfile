@@ -45,7 +45,7 @@ RUN ls -a /usr/lib && apk add xf86-video-amdgpu linux-firmware-amdgpu --no-cache
  #&& cp -a /usr/lib/libxshmfence*.so* "$OUTPUT/usr/lib" \
  && cp -a /usr/lib/libkms*.so* "$OUTPUT/usr/lib" \
  && cp -a /usr/lib/libxcb*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libffi*.so* "$OUTPUT/usr/lib" \/usr/lib/libkms
+ && cp -a /usr/lib/libffi*.so* "$OUTPUT/usr/lib" \
  && cp -a /usr/lib/libLLVM*.so* "$OUTPUT/usr/lib" \
  && cp -a /usr/lib/libzstd*.so* "$OUTPUT/usr/lib" \
  && cp -a /usr/lib/libexpat*.so* "$OUTPUT/usr/lib" \
