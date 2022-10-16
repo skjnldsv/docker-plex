@@ -8,13 +8,16 @@ RUN apk add --no-cache \
     curl \
     dpkg \
     file \
-    gcc \
     g++ \
-    libc6-compat \
+    gcc \
     git \
+    libc6-compat \
+    libdrm-dev \
     libtool \
+    libxshmfence \
     linux-headers \
     make \
+    mesa-va-gallium \
     musl-dev \
     nghttp2-dev \
     pkgconfig \
@@ -31,6 +34,8 @@ ARG DESTDIR
 
 WORKDIR /tmp/amd
 
+RUN ls -la /usr/lib/
+
 RUN apk add  xf86-video-amdgpu linux-firmware-amdgpu --no-cache --update-cache \
  && apk add --no-cache -X http://dl-cdn.alpinelinux.org/alpine/edge/testing libva-utils \
  && mkdir -p "$OUTPUT/usr/bin" \
@@ -42,7 +47,7 @@ RUN apk add  xf86-video-amdgpu linux-firmware-amdgpu --no-cache --update-cache \
  && cp -a /usr/lib/libdrm*.so* "$OUTPUT/usr/lib" \
  && cp -a /usr/lib/libbsd*.so* "$OUTPUT/usr/lib" \
  && cp -a /usr/lib/libxshmfence*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libkms*.so* "$OUTPUT/usr/lib" \
+ # && cp -a /usr/lib/libkms*.so* "$OUTPUT/usr/lib" \
  && cp -a /usr/lib/libxcb*.so* "$OUTPUT/usr/lib" \
  && cp -a /usr/lib/libffi*.so* "$OUTPUT/usr/lib" \
  && cp -a /usr/lib/libLLVM*.so* "$OUTPUT/usr/lib" \
@@ -84,7 +89,7 @@ COPY --from=amd $OUTPUT/usr/lib/libdrm*.so* /usr/lib/plexmediaserver/lib/
 COPY --from=amd $OUTPUT/usr/lib/libelf*.so* /usr/lib/plexmediaserver/lib/
 COPY --from=amd $OUTPUT/usr/lib/libffi*.so* /usr/lib/plexmediaserver/lib/
 COPY --from=amd $OUTPUT/usr/lib/libgcc_s*.so* /usr/lib/plexmediaserver/lib/
-COPY --from=amd $OUTPUT/usr/lib/libkms*.so* /usr/lib/plexmediaserver/lib/
+# COPY --from=amd $OUTPUT/usr/lib/libkms*.so* /usr/lib/plexmediaserver/lib/
 COPY --from=amd $OUTPUT/usr/lib/libLLVM*.so* /usr/lib/plexmediaserver/lib/
 COPY --from=amd $OUTPUT/usr/lib/libstdc++*.so* /usr/lib/plexmediaserver/lib/
 COPY --from=amd $OUTPUT/usr/lib/libva*.so* /usr/lib/plexmediaserver/lib/
