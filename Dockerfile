@@ -74,7 +74,7 @@ RUN apt-get update \
  && apt-get install -y software-properties-common
 
 RUN add-apt-repository ppa:oibaf/graphics-drivers -y
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 9386B48A1A693C5C \
+RUN curl -sL --retry 3 https://repo.radeon.com/rocm/rocm.gpg.key | apt-key add - \
  && add-apt-repository "deb https://repo.radeon.com/rocm/apt/latest $(lsb_release -s -c) main" -y
 
 RUN apt-get update \
