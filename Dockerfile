@@ -73,6 +73,7 @@ ARG OUTPUT
 RUN apt-get update \
  && apt-get install -y software-properties-common \
  && add-apt-repository ppa:oibaf/graphics-drivers -y \
+ && add-apt-repository "deb https://repo.radeon.com/rocm/apt/latest $(lsb_release -s -c) main" -y \
  && apt-get update \
  && apt-get install -y \
 	vainfo \
@@ -80,6 +81,7 @@ RUN apt-get update \
 	mesa-vdpau-drivers \
 	libdrm-amdgpu1 \
 	libavutil56 \
+	rocm-opencl-runtime \
  && apt-get clean
 
 # Copy lib files
