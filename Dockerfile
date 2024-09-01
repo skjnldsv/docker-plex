@@ -83,7 +83,7 @@ RUN apt-get update \
 	mesa-va-drivers \
 	mesa-vdpau-drivers \
 	libdrm-amdgpu1 \
-	libavutil56 \
+	libavutil58 \
 	rocm-opencl-runtime \
  && apt-get clean
 
