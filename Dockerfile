@@ -1,5 +1,5 @@
 ARG OUTPUT=/output
-FROM alpine:edge@b93f4f6834d5c6849d859a4c07cc88f5a7d8ce5fb8d2e72940d8edd8be343c04 AS builder
+FROM alpine:edge@sha256:b93f4f6834d5c6849d859a4c07cc88f5a7d8ce5fb8d2e72940d8edd8be343c04 AS builder
 RUN apk add --no-cache \
     autoconf \
     automake \
@@ -35,6 +35,7 @@ ARG DESTDIR
 WORKDIR /tmp/amd
 
 RUN ls -la /usr/lib/
+RUN ls -la /usr/lib/dri/
 
 RUN apk add  xf86-video-amdgpu linux-firmware-amdgpu --no-cache --update-cache \
  && apk add --no-cache -X http://dl-cdn.alpinelinux.org/alpine/edge/testing libva-utils \
