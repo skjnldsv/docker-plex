@@ -1,5 +1,5 @@
 ARG OUTPUT=/output
-FROM alpine:edge AS builder
+FROM alpine:edge@b93f4f6834d5c6849d859a4c07cc88f5a7d8ce5fb8d2e72940d8edd8be343c04 AS builder
 RUN apk add --no-cache \
     autoconf \
     automake \
