@@ -2,7 +2,7 @@
 
 Easy as it sounds, just see the linuxserver docs: https://docs.linuxserver.io/images/docker-plex/
 
-Use the image `ghcr.io/skjnldsv/docker-plex:master`.
+Use the image `ghcr.io/skjnldsv/docker-plex:nightly`.
 Also make sure you pass your amd device like so:
 
 ```yml
@@ -16,7 +16,7 @@ version: "3.7"
 
 services:
   plex:
-    image: ghcr.io/skjnldsv/docker-plex:master
+    image: ghcr.io/skjnldsv/docker-plex:nightly
     restart: unless-stopped
     container_name: plex
 
