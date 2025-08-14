@@ -72,7 +72,7 @@ ARG OUTPUT
 
 # Install AMD drivers
 RUN apt-get update \
- && apt-get install -y software-properties-common
+ && apt-get install -y software-properties-common bzip2
 
 RUN add-apt-repository ppa:oibaf/graphics-drivers -y
 RUN curl -sL --retry 3 https://repo.radeon.com/rocm/rocm.gpg.key | apt-key add - \
