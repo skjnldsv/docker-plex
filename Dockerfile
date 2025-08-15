@@ -78,15 +78,19 @@ RUN add-apt-repository ppa:oibaf/graphics-drivers -y
 RUN curl -sL --retry 3 https://repo.radeon.com/rocm/rocm.gpg.key | apt-key add - \
  && add-apt-repository "deb https://repo.radeon.com/rocm/apt/latest $(lsb_release -s -c) main" -y
 
-RUN apt-get update \
- && apt-get install -y \
+# Disable compression for apt as ROCM repo has its compressed index broken
+RUN echo 'Acquire::CompressionTypes::Order { "none"; "gz"; "bz2"; "xz"; };' | tee /etc/apt/apt.conf.d/99prefer-uncompressed
+
+# Wait for the repo to be available
+RUN sleep 10 && apt update \
+ && sleep 5 && apt install -y --fix-missing \
 	vainfo \
 	mesa-va-drivers \
 	mesa-vdpau-drivers \
 	libdrm-amdgpu1 \
 	libavutil58 \
 	rocm-opencl-runtime \
- && apt-get clean
+ && apt clean
 
 # Copy lib files
 COPY --from=amd $OUTPUT/usr/lib/dri/*.so* /usr/lib/plexmediaserver/lib/dri/
