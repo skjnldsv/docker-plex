@@ -23,6 +23,12 @@ env:
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
 
+# Cancel superseded runs on the same ref; also avoids racing docker-fork.yml
+# on the shared GHA cache (see the scoped cache-to below).
+concurrency:
+  group: docker-publish-${{ github.ref }}
+  cancel-in-progress: true
+
 
 jobs:
   build:
@@ -84,5 +90,7 @@ jobs:
           push: ${{ github.event.pull_request.head.repo.fork != true }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Scoped so this workflow never collides with docker-fork.yml when
+          # both build the same ref concurrently ("failed to reserve cache").
+          cache-from: type=gha,scope=publish
+          cache-to: type=gha,mode=max,scope=publish
