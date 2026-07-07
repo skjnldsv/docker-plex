@@ -37,7 +37,7 @@ jobs:
       # Check out the PR head explicitly. pull_request_target defaults to the
       # base ref, so we must pin the fork commit we intend to build and test.
       - name: Checkout PR head
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
