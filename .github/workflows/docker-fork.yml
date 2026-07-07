@@ -1,0 +1,73 @@
+name: Docker (fork PR)
+
+# Build and push a sha-tagged image for fork pull requests, so a maintainer
+# can quickly pull and test them.
+#
+# SECURITY: this uses pull_request_target, which runs with the base repo's
+# read-write GITHUB_TOKEN while building code from the fork. It is therefore
+# gated behind the "ci: build image" label: the job only runs once a
+# maintainer has reviewed the PR (in particular the Dockerfile and base image)
+# and applied the label. Same-repo PRs are handled by docker-publish.yml and
+# are skipped here. Only the immutable sha-<commit> tag is published; the
+# moving nightly/main tags are never touched.
+
+on:
+  pull_request_target:
+    branches: [ "main" ]
+    types: [ labeled, synchronize ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    # Only for fork PRs that carry the review label.
+    if: >-
+      github.event.pull_request.head.repo.fork == true &&
+      contains(github.event.pull_request.labels.*.name, 'ci: build image')
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      # Check out the PR head explicitly. pull_request_target defaults to the
+      # base ref, so we must pin the fork commit we intend to build and test.
+      - name: Checkout PR head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup Docker buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # sha of the fork commit only. No moving tags from untrusted code.
+          tags: |
+            type=sha,format=long
+            type=raw,value=pr-${{ github.event.pull_request.number }}
+
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
