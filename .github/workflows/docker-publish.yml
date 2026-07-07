@@ -14,6 +14,8 @@ on:
     tags: [ 'v*.*.*' ]
   pull_request:
     branches: [ "main" ]
+  # Allow running the build/publish manually.
+  workflow_dispatch:
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -41,10 +43,12 @@ jobs:
       - name: Setup Docker buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
 
-      # Login against a Docker registry except on PR
+      # Login against a Docker registry.
+      # Skipped for pull requests coming from a fork, since the GITHUB_TOKEN
+      # only has read-only package access there and pushing would fail.
       # https://github.com/docker/login-action
       - name: Log into registry ${{ env.REGISTRY }}
-        if: github.event_name != 'pull_request'
+        if: github.event.pull_request.head.repo.fork != true
         uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1
         with:
           registry: ${{ env.REGISTRY }}
@@ -58,15 +62,26 @@ jobs:
         uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # Every event (incl. PRs) gets a unique, immutable sha tag so the
+          # resulting image can be pulled and tested. The moving `nightly`,
+          # `main` and semver tags are gated below to trusted refs only.
+          tags: |
+            type=sha,format=long
+            type=ref,event=pr
+            type=raw,value=main,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+            type=raw,value=nightly,enable=${{ github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
 
-      # Build and push Docker image with Buildx (don't push on PR)
+      # Build and push Docker image with Buildx.
+      # Pushes on every event except fork pull requests (no registry access).
       # https://github.com/docker/build-push-action
       - name: Build and push Docker image
         id: build-and-push
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event.pull_request.head.repo.fork != true }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
