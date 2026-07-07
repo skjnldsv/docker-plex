@@ -4,12 +4,23 @@ name: Docker (fork PR)
 # can quickly pull and test them.
 #
 # SECURITY: this uses pull_request_target, which runs with the base repo's
-# read-write GITHUB_TOKEN while building code from the fork. It is therefore
-# gated behind the "ci: build image" label: the job only runs once a
-# maintainer has reviewed the PR (in particular the Dockerfile and base image)
-# and applied the label. Same-repo PRs are handled by docker-publish.yml and
-# are skipped here. Only the immutable sha-<commit> tag is published; the
-# moving nightly/main tags are never touched.
+# read-write GITHUB_TOKEN while building code from the fork. Defences, in order:
+#
+#   1. Label gate — the build only runs on the `labeled` event for the
+#      `ci: build image` label, i.e. once a maintainer has reviewed the diff
+#      (Dockerfile / base image) and explicitly applied it.
+#   2. Push revokes approval — any new push (`synchronize`) removes the label
+#      and does NOT build. This blocks the bait-and-switch where a contributor
+#      gets a benign commit labelled, then pushes malicious code that would
+#      otherwise re-run with the trusted token. The maintainer must re-review
+#      and re-apply the label to build the new commit.
+#   3. Environment gate — the build job targets the `fork-build` environment.
+#      Configure it with required reviewers so every run also pauses for a
+#      fresh, run-scoped human approval, independent of the label.
+#
+# Same-repo PRs are handled by docker-publish.yml and are skipped here. Only the
+# immutable sha-<commit> tag is published; the moving nightly/main tags are
+# never touched.
 
 on:
   pull_request_target:
@@ -27,13 +38,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    # Only for fork PRs that carry the review label.
+  # Strip the review label whenever new commits are pushed, so a stale approval
+  # can never be reused to build code the maintainer has not seen.
+  revoke-on-push:
     if: >-
+      github.event.action == 'synchronize' &&
+      github.event.pull_request.head.repo.fork == true &&
+      contains(github.event.pull_request.labels.*.name, 'ci: build image')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Remove build label after new push
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          gh api -X DELETE \
+            "repos/${{ github.repository }}/issues/${PR}/labels/ci: build image"
+          gh pr comment "${PR}" --repo "${{ github.repository }}" \
+            --body "New commits pushed — removed the \`ci: build image\` label. A maintainer must re-review and re-apply it to build the updated code."
+
+  build:
+    # Only on explicit labelling of a fork PR. `synchronize` never reaches here
+    # (it hits revoke-on-push instead), so a push can't ride a stale label.
+    if: >-
+      github.event.action == 'labeled' &&
       github.event.pull_request.head.repo.fork == true &&
       contains(github.event.pull_request.labels.*.name, 'ci: build image')
 
     runs-on: ubuntu-latest
+    # Add required reviewers to this environment for a per-run approval gate.
+    environment: fork-build
     permissions:
       contents: read
       packages: write
@@ -44,9 +80,8 @@ jobs:
       # base ref, so we must pin the fork commit we intend to build and test.
       # checkout@v7 refuses fork code under pull_request_target by default to
       # avoid "pwn request" attacks; we opt in because building the fork's code
-      # is the whole point of this job. The compensating control is the
-      # `ci: build image` label gate above: this only runs after a maintainer
-      # has reviewed the diff (Dockerfile/base image) and applied the label.
+      # is the whole point of this job, guarded by the label + environment
+      # gates described in the file header.
       - name: Checkout PR head
         uses: actions/checkout@v7
         with:
