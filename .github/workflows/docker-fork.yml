@@ -116,7 +116,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # Own scope so a fork build never collides with docker-publish.yml
-          # on the shared GHA cache ("failed to reserve cache").
-          cache-from: type=gha,scope=fork
-          cache-to: type=gha,mode=max,scope=fork
+          # Read the publish scope's warm layers for speed, but never WRITE
+          # cache from a fork build: the repo GHA cache sits near the 10 GB
+          # limit, so a mode=max export here fails with "failed to reserve
+          # cache". Fork builds are occasional, so read-only cache is enough.
+          cache-from: type=gha,scope=publish
