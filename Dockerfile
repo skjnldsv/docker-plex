@@ -39,31 +39,27 @@ RUN ls -la /usr/lib/dri/
 
 RUN apk add  xf86-video-amdgpu linux-firmware-amdgpu --no-cache --update-cache \
  && apk add --no-cache -X http://dl-cdn.alpinelinux.org/alpine/edge/testing libva-utils \
- && mkdir -p "$OUTPUT/usr/bin" \
+ && mkdir -p "$OUTPUT/usr/bin" "$OUTPUT/usr/lib/dri" "$OUTPUT/usr/share/libdrm" \
  && cp -a /usr/bin/vainfo "$OUTPUT/usr/bin" \
- && mkdir -p "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libbsd*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libdrm*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libelf*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libexpat*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libffi*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libgallium*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libgcc_s*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libLLVM*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libmd*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libstdc++*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libva*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libwayland*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libX*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libxcb*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libxml2*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libxshmfence*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libz*.so* "$OUTPUT/usr/lib" \
- && cp -a /usr/lib/libzstd*.so* "$OUTPUT/usr/lib" \
- && mkdir -p "$OUTPUT/usr/lib/dri" \
- && cp -a /usr/lib/dri/*.so* "$OUTPUT/usr/lib/dri" \
- && mkdir -p "$OUTPUT/usr/share/libdrm" \
- && cp -a /lib/ld-musl-x86_64.so.1 "$OUTPUT/usr/lib" \
+ && cp -aL /usr/lib/dri/*.so* "$OUTPUT/usr/lib/dri" \
+ # Collect the COMPLETE ldd dependency closure of the VA drivers (+ vainfo)
+ # instead of a hand-maintained library list. The old explicit list silently
+ # dropped newly-introduced mesa dependencies (e.g. libSPIRV-Tools.so), which
+ # made radeonsi_drv_video.so fail to dlopen on current Alpine mesa.
+ && for pass in 1 2 3 4 5 6; do \
+      for f in "$OUTPUT"/usr/lib/dri/*.so* "$OUTPUT"/usr/lib/*.so* "$OUTPUT"/usr/bin/vainfo; do \
+        ldd "$f" 2>/dev/null | grep -oE '/[^ ]+\.so[^ )]*' || true; \
+      done | sort -u | while read -r dep; do \
+        b="$(basename "$dep")"; \
+        case "$b" in libc.musl-*|ld-musl-*) continue;; esac; \
+        [ -e "$OUTPUT/usr/lib/$b" ] || cp -aL "$dep" "$OUTPUT/usr/lib/$b" 2>/dev/null || true; \
+      done; \
+    done \
+ # Stage the up-to-date musl loader/libc. Current mesa requires qsort_r, which
+ # is missing from the musl bundled in plexmediaserver; ship it as both the
+ # loader and libc.so so the symbol resolves.
+ && cp -aL /lib/ld-musl-x86_64.so.1 "$OUTPUT/usr/lib/ld-musl-x86_64.so.1" \
+ && cp -aL /lib/ld-musl-x86_64.so.1 "$OUTPUT/usr/lib/libc.so" \
  && cp -a /usr/share/libdrm/* "$OUTPUT/usr/share/libdrm"
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -88,17 +84,17 @@ RUN apt-get update \
 	rocm-opencl-runtime \
  && apt-get clean
 
-# Copy lib files
+# Install the collected AMD VAAPI runtime into plexmediaserver's lib dir.
+# The full dependency closure (drivers + libva + libdrm + the rest) is copied
+# in, overwriting the stale musl libraries Plex bundles -- notably libdrm,
+# whose bundled version lacks amdgpu_va_manager_alloc required by current mesa.
+# The musl loader and libc.so are upgraded in place to provide qsort_r.
 COPY --from=amd $OUTPUT/usr/lib/dri/*.so* /usr/lib/plexmediaserver/lib/dri/
-COPY --from=amd $OUTPUT/usr/lib/ld-musl-x86_64.so* /usr/lib/plexmediaserver/lib/
-COPY --from=amd $OUTPUT/usr/lib/libdrm*.so* /usr/lib/plexmediaserver/lib/
-COPY --from=amd $OUTPUT/usr/lib/libelf*.so* /usr/lib/plexmediaserver/lib/
-COPY --from=amd $OUTPUT/usr/lib/libffi*.so* /usr/lib/plexmediaserver/lib/
-COPY --from=amd $OUTPUT/usr/lib/libgcc_s*.so* /usr/lib/plexmediaserver/lib/
-COPY --from=amd $OUTPUT/usr/lib/libgallium*.so* /usr/lib/plexmediaserver/lib/
-COPY --from=amd $OUTPUT/usr/lib/libLLVM*.so* /usr/lib/plexmediaserver/lib/
-COPY --from=amd $OUTPUT/usr/lib/libstdc++*.so* /usr/lib/plexmediaserver/lib/
-COPY --from=amd $OUTPUT/usr/lib/libva*.so* /usr/lib/plexmediaserver/lib/
-COPY --from=amd $OUTPUT/usr/lib/libxml2*.so* /usr/lib/plexmediaserver/lib/
-COPY --from=amd $OUTPUT/usr/lib/libz*.so.* /usr/lib/plexmediaserver/lib/
-COPY --from=amd $OUTPUT/usr/lib/libzstd*.so* /usr/lib/plexmediaserver/lib/
+COPY --from=amd $OUTPUT/usr/lib/ /tmp/amd-lib/
+RUN set -eux; PLIB=/usr/lib/plexmediaserver/lib; \
+    for f in /tmp/amd-lib/*.so*; do \
+      cp -a "$f" "$PLIB/$(basename "$f")"; \
+    done; \
+    cp -a /tmp/amd-lib/ld-musl-x86_64.so.1 "$PLIB/ld-musl-x86_64.so.1"; \
+    cp -a /tmp/amd-lib/libc.so "$PLIB/libc.so"; \
+    rm -rf /tmp/amd-lib
