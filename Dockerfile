@@ -75,17 +75,18 @@ RUN apt-get update \
  && apt-get install -y software-properties-common
 
 RUN add-apt-repository ppa:oibaf/graphics-drivers -y
-RUN curl -sL --retry 3 https://repo.radeon.com/rocm/rocm.gpg.key | apt-key add - \
- && add-apt-repository "deb https://repo.radeon.com/rocm/apt/latest $(lsb_release -s -c) main" -y
 
+# ROCm OpenCL comes from the Ubuntu archive (rocm-opencl-icd): repo.radeon.com
+# only publishes jammy/noble dists, so it cannot be used on newer releases.
+# libavutil is resolved by name since the soname suffix changes every release.
 RUN apt-get update \
  && apt-get install -y \
 	vainfo \
 	mesa-va-drivers \
 	mesa-vdpau-drivers \
 	libdrm-amdgpu1 \
-	libavutil58 \
-	rocm-opencl-runtime \
+	rocm-opencl-icd \
+	"$(apt-cache search --names-only '^libavutil[0-9]+$' | cut -d' ' -f1 | sort -V | tail -1)" \
  && apt-get clean
 
 # Copy lib files
